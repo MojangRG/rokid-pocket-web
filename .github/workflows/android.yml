@@ -1,7 +1,6 @@
 name: Build Android APK
 on:
   push:
-  pull_request:
   workflow_dispatch:
 jobs:
   apk:
@@ -17,7 +16,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
-      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android SDK
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          test -x "$SDKMANAGER"
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          set -o pipefail
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
       - run: |
           mkdir -p build/head-test
           javac -d build/head-test app/src/main/java/dev/rokid/pocketweb/HeadGestureDetector.java tests/HeadGestureDetectorTest.java
